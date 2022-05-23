@@ -1,0 +1,88 @@
+version: '3'
+services:
+  # Sonarr: TV show tracker and downlaoder
+  # https://hub.docker.com/r/linuxserver/sonarr
+  sonarr:
+    container_name: sonarr
+    image: linuxserver/sonarr:latest
+    restart: unless-stopped
+    ports:
+      - 0.0.0.0:8989:8989
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DATA}/sonarr:/config # config files
+      - ${MERGERFS}/Media/TV:/tv # tv shows folder
+      - ${MERGERFS}/Downloads:/downloads
+
+  # Radarr: TV show tracker and downlaoder
+  # https://hub.docker.com/r/linuxserver/radarr
+  radarr:
+    container_name: radarr
+    image: linuxserver/radarr:latest
+    restart: unless-stopped
+    ports:
+      - 0.0.0.0:7878:7878
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DATA}/radarr:/config # config files
+      - ${MERGERFS}/Media/Movies:/movies # movies folder
+      - ${MERGERFS}/Downloads:/downloads
+
+  # Jackett: Indexer for Sonarr and Radarr
+  # https://hub.docker.com/r/linuxserver/jackett
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett:latest
+    restart: unless-stopped
+    ports:
+      - 0.0.0.0:9117:9117
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DATA}/jackett:/config # config files
+
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - ${DATA}/deluge:/config
+      - ${MERGERFS}/Downloads:/downloads
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TZ}
+    volumes:
+      - ${DATA}/jellyfin:/config
+      - ${MERGERFS}/Media/TV:/data/tvshows
+      - ${MERGERFS}/Media/Movies:/data/movies
+    ports:
+      - 8096:8096
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
+    restart: unless-stopped
